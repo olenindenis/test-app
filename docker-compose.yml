@@ -1,0 +1,36 @@
+services:
+  app:
+    build: .
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+    ports:
+      - "8000:8000"
+    command: php -S 0.0.0.0:8000 -t public
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: earning_lines
+      POSTGRES_USER: alcor
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alcor -d earning_lines"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:
