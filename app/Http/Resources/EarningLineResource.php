@@ -6,16 +6,9 @@ namespace App\Http\Resources;
 
 use App\Domain\EarningLine\Money;
 use App\Models\EarningLineAdjustmentView;
-use App\Models\EarningLineView;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/**
- * The line's current value with its audit trail: the (frozen) system value
- * followed by every manual adjustment in order.
- *
- * @mixin EarningLineView
- */
 final class EarningLineResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -40,7 +33,6 @@ final class EarningLineResource extends JsonResource
         ];
     }
 
-    /** @return array{amount: string, formatted: string} */
     private static function money(Money $money): array
     {
         return ['amount' => $money->toDecimalString(), 'formatted' => $money->format()];

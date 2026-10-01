@@ -9,7 +9,6 @@ use App\Domain\EarningLine\Money;
 use App\Domain\Shared\DomainEvent;
 use DateTimeImmutable;
 
-/** The system calculated the line for the first time. */
 final readonly class EarningLineCalculated implements DomainEvent
 {
     public function __construct(

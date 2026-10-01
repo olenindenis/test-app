@@ -5,9 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Append-only event store for earning lines — the single source of truth.
- */
 return new class extends Migration
 {
     public function up(): void
@@ -21,11 +18,9 @@ return new class extends Migration
             $table->timestampTz('occurred_at', precision: 6);
             $table->timestampTz('recorded_at', precision: 6)->useCurrent();
 
-            // Optimistic concurrency: two writers can never store the same version of a line.
             $table->unique(['aggregate_id', 'version']);
         });
 
-        // Enforce immutability at the database level: stored events can never be changed or removed.
         DB::unprepared(<<<'SQL'
             CREATE OR REPLACE FUNCTION earning_line_events_are_immutable() RETURNS trigger AS $$
             BEGIN

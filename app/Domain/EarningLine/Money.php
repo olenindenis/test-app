@@ -6,13 +6,8 @@ namespace App\Domain\EarningLine;
 
 use InvalidArgumentException;
 
-/**
- * Monetary amount stored as an integer number of cents to avoid any
- * floating point rounding. The PoC assumes a single currency (USD).
- */
 final readonly class Money
 {
-    /** Decimal amount with an optional sign and at most two decimals, e.g. "-45.55". */
     public const string PATTERN = '/^([+-])?(\d{1,12})(?:\.(\d{1,2}))?$/';
 
     private const string MINUS_SIGN = "\u{2212}";
@@ -24,7 +19,6 @@ final readonly class Money
         return new self($cents);
     }
 
-    /** Parses a decimal string such as "1050", "-45.55" or "+100.1". */
     public static function fromString(string $amount): self
     {
         $amount = trim($amount);
@@ -58,19 +52,16 @@ final readonly class Money
         return $this->cents === $other->cents;
     }
 
-    /** Machine-friendly representation, e.g. "-45.55". */
     public function toDecimalString(): string
     {
         return ($this->isNegative() ? '-' : '').$this->absoluteDecimal(thousands: '');
     }
 
-    /** Human-friendly representation, e.g. "$1,004.45" or "−$45.55". */
     public function format(): string
     {
         return ($this->isNegative() ? self::MINUS_SIGN : '').'$'.$this->absoluteDecimal(thousands: ',');
     }
 
-    /** Like format() but always shows the sign, e.g. "+$100.10" — used for adjustments. */
     public function formatSigned(): string
     {
         return $this->isNegative() ? $this->format() : '+'.$this->format();

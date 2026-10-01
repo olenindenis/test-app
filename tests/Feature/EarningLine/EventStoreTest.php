@@ -82,7 +82,6 @@ final class EventStoreTest extends TestCase
         } catch (ConcurrencyException) {
         }
 
-        // Only A's adjustment was stored and projected; B can reload and retry.
         $this->assertSame(['Declined benefit', 'A'], EarningLineAdjustmentView::query()->orderBy('number')->pluck('comment')->all());
         $this->assertSame('$955.45', $repository->get($id)->currentValue()->format());
     }

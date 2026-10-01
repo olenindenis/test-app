@@ -56,7 +56,6 @@ final class EarningLineController extends Controller
         return $this->showLine($lineId)->setStatusCode(201);
     }
 
-    /** The raw, immutable event stream of a line — the complete audit log. */
     public function events(string $lineId, EventStore $eventStore): JsonResponse
     {
         $id = EarningLineId::fromString($lineId);

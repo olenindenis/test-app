@@ -6,11 +6,6 @@ namespace App\Events;
 
 use Illuminate\Foundation\Events\Dispatchable;
 
-/**
- * Integration event: the source data used to calculate an employee's earning
- * lines has changed (e.g. HR updated the base salary). Payroll reacts to it by
- * asking every affected earning line to recalculate itself.
- */
 final readonly class EmployeeBaseSalaryChanged
 {
     use Dispatchable;

@@ -13,24 +13,12 @@ use App\Domain\Shared\AggregateRoot;
 use App\Domain\Shared\DomainEvent;
 use DateTimeImmutable;
 
-/**
- * An earning line (e.g. an employee's base salary for a pay period).
- *
- * Business rules:
- *  - The system value can be recalculated freely until the first manual adjustment.
- *  - After the first manual adjustment the system value is frozen forever;
- *    later recalculation attempts are ignored (and recorded for audit).
- *  - Manual adjustments are append-only: there is intentionally no way to edit
- *    or remove one. Mistakes are fixed by adding a compensating adjustment.
- *  - Current value = system value + sum of all manual adjustments.
- */
 final class EarningLine extends AggregateRoot
 {
     private EarningLineId $id;
 
     private Money $systemValue;
 
-    /** @var list<ManualAdjustment> */
     private array $adjustments = [];
 
     public static function calculate(EarningLineId $id, string $employeeId, Money $amount, DateTimeImmutable $at): self
@@ -41,7 +29,6 @@ final class EarningLine extends AggregateRoot
         return $line;
     }
 
-    /** Called by the system whenever the source data used to calculate the line changes. */
     public function recalculate(Money $amount, DateTimeImmutable $at): void
     {
         if ($this->hasManualAdjustments()) {
@@ -78,7 +65,6 @@ final class EarningLine extends AggregateRoot
         return $this->id;
     }
 
-    /** The system-calculated value; frozen once the first manual adjustment is added. */
     public function systemValue(): Money
     {
         return $this->systemValue;
@@ -98,7 +84,6 @@ final class EarningLine extends AggregateRoot
         return $this->adjustments !== [];
     }
 
-    /** @return list<ManualAdjustment> */
     public function adjustments(): array
     {
         return $this->adjustments;

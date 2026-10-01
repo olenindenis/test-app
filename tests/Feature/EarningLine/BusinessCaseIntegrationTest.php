@@ -12,14 +12,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Integration tests driven by the data tables from the business case.
- *
- * The whole stack is exercised: the system and the specialist act through the
- * HTTP API, source data changes arrive as the EmployeeBaseSalaryChanged
- * integration event, events are stored in PostgreSQL and read back from the
- * projections.
- */
 final class BusinessCaseIntegrationTest extends TestCase
 {
     use RefreshDatabase;
@@ -36,10 +28,6 @@ final class BusinessCaseIntegrationTest extends TestCase
 
     private const string MINUS = "\u{2212}";
 
-    /**
-     * "Examples and expected numbers" table: step => [event, amount, comment, current value after the step].
-     * The brief gives no source value for step 4; any value different from $1,050.00 proves it is ignored.
-     */
     private const array STEPS = [
         1 => [self::CALCULATE, '1000.00', null, '$1,000.00'],
         2 => [self::SOURCE_CHANGE, '1050.00', null, '$1,050.00'],
@@ -51,7 +39,6 @@ final class BusinessCaseIntegrationTest extends TestCase
         8 => [self::ADJUST, '+0.20', 'Correcting mistake in adjustment #4', '$1,104.45'],
     ];
 
-    /** "Expected final audit history for this line" table. */
     private const array EXPECTED_AUDIT_HISTORY = [
         ['System value (frozen at step 3)', '$1,050.00'],
         ['Adjustment 1', self::MINUS.'$45.55'],
@@ -121,14 +108,14 @@ final class BusinessCaseIntegrationTest extends TestCase
 
         $this->assertSame(
             [
-                'earning_line.calculated',              // step 1
-                'earning_line.recalculated',            // step 2
-                'earning_line.manual_adjustment_added', // step 3
-                'earning_line.recalculation_ignored',   // step 4
-                'earning_line.manual_adjustment_added', // step 5
-                'earning_line.manual_adjustment_added', // step 6
-                'earning_line.manual_adjustment_added', // step 7
-                'earning_line.manual_adjustment_added', // step 8
+                'earning_line.calculated',
+                'earning_line.recalculated',
+                'earning_line.manual_adjustment_added',
+                'earning_line.recalculation_ignored',
+                'earning_line.manual_adjustment_added',
+                'earning_line.manual_adjustment_added',
+                'earning_line.manual_adjustment_added',
+                'earning_line.manual_adjustment_added',
             ],
             array_column($events, 'type'),
         );
@@ -209,7 +196,6 @@ final class BusinessCaseIntegrationTest extends TestCase
         return $this->getJson("/api/earning-lines/{$this->lineId}");
     }
 
-    /** The line's audit history in the shape of the "Expected final audit history" table. */
     private function auditHistory(): array
     {
         $line = $this->getLine()->assertOk()->json('data');

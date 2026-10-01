@@ -5,20 +5,9 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Domain\EarningLine\Money;
-use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * Read model of an earning line. Written exclusively by EarningLineProjector.
- *
- * @property string $id
- * @property string $employee_id
- * @property int $system_value_cents
- * @property int $adjustments_total_cents
- * @property CarbonImmutable|null $locked_at
- * @property int $ignored_recalculations
- */
 final class EarningLineView extends Model
 {
     protected $table = 'earning_lines';
@@ -41,7 +30,6 @@ final class EarningLineView extends Model
         ];
     }
 
-    /** @return HasMany<EarningLineAdjustmentView, $this> */
     public function adjustments(): HasMany
     {
         return $this->hasMany(EarningLineAdjustmentView::class, 'earning_line_id')->orderBy('number');

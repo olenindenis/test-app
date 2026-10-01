@@ -4,10 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Read models (projections) built from earning_line_events.
- * They can be dropped and rebuilt at any time: php artisan earning-lines:rebuild-projections
- */
 return new class extends Migration
 {
     public function up(): void
@@ -17,7 +13,7 @@ return new class extends Migration
             $table->string('employee_id')->index();
             $table->bigInteger('system_value_cents');
             $table->bigInteger('adjustments_total_cents')->default(0);
-            // Set by the first manual adjustment; a non-null value means the line is locked.
+
             $table->timestampTz('locked_at', precision: 6)->nullable();
             $table->unsignedInteger('ignored_recalculations')->default(0);
         });

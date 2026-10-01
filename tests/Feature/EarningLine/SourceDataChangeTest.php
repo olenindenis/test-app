@@ -14,7 +14,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/** How a source data change (EmployeeBaseSalaryChanged) fans out to earning lines. */
 final class SourceDataChangeTest extends TestCase
 {
     use RefreshDatabase;

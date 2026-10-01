@@ -18,7 +18,7 @@ services:
       POSTGRES_USER: alcor
       POSTGRES_PASSWORD: secret
     ports:
-      - "5433:5432" # for DB clients on the host only; the app connects via the "postgres" service
+      - "5433:5432"
     volumes:
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - pgdata:/var/lib/postgresql/data

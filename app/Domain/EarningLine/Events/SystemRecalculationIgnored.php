@@ -9,10 +9,6 @@ use App\Domain\EarningLine\Money;
 use App\Domain\Shared\DomainEvent;
 use DateTimeImmutable;
 
-/**
- * The system tried to recalculate a line that already has manual adjustments.
- * The attempt does not change the line's value; it is recorded for auditing only.
- */
 final readonly class SystemRecalculationIgnored implements DomainEvent
 {
     public function __construct(

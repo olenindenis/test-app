@@ -8,7 +8,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/** HTTP-specific behaviour: validation and error responses. The happy path is covered by BusinessCaseIntegrationTest. */
 final class EarningLineApiTest extends TestCase
 {
     use RefreshDatabase;

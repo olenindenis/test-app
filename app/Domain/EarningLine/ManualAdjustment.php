@@ -6,7 +6,6 @@ namespace App\Domain\EarningLine;
 
 use DateTimeImmutable;
 
-/** A single, immutable manual correction applied to an earning line. */
 final readonly class ManualAdjustment
 {
     public function __construct(

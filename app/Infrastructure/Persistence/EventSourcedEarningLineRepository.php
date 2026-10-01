@@ -12,11 +12,6 @@ use App\Infrastructure\EventStore\EventStore;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\ConnectionInterface;
 
-/**
- * Loads an earning line by replaying its events and saves it by appending the
- * newly recorded ones. Appending and publishing happen in one transaction, so
- * the synchronous projections are always consistent with the event store.
- */
 final readonly class EventSourcedEarningLineRepository implements EarningLineRepository
 {
     public function __construct(

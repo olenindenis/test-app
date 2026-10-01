@@ -6,7 +6,6 @@ namespace App\Domain\EarningLine;
 
 use App\Domain\EarningLine\Exceptions\InvalidManualAdjustment;
 
-/** The mandatory explanation a specialist must give for every manual adjustment. */
 final readonly class AdjustmentComment
 {
     public const int MAX_LENGTH = 1000;

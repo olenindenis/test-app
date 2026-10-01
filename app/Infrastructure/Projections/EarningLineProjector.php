@@ -13,14 +13,8 @@ use App\Models\EarningLineAdjustmentView;
 use App\Models\EarningLineView;
 use Illuminate\Database\Eloquent\Builder;
 
-/**
- * Keeps the earning_lines / earning_line_adjustments read models in sync with
- * the event stream. Registered as a Laravel event subscriber; the same handlers
- * are used when replaying the event store.
- */
 final class EarningLineProjector
 {
-    /** @var array<class-string<DomainEvent>, string> */
     private const array HANDLERS = [
         EarningLineCalculated::class => 'onCalculated',
         EarningLineRecalculated::class => 'onRecalculated',
@@ -28,7 +22,6 @@ final class EarningLineProjector
         ManualAdjustmentAdded::class => 'onManualAdjustmentAdded',
     ];
 
-    /** @return array<class-string<DomainEvent>, string> */
     public function subscribe(): array
     {
         return self::HANDLERS;
@@ -73,7 +66,6 @@ final class EarningLineProjector
         $this->line($event)->whereNull('locked_at')->update(['locked_at' => $event->addedAt]);
     }
 
-    /** @return Builder<EarningLineView> */
     private function line(DomainEvent $event): Builder
     {
         return EarningLineView::query()->whereKey($event->aggregateId());

@@ -22,29 +22,21 @@ use ReflectionMethod;
 
 final class EarningLineTest extends TestCase
 {
-    /**
-     * The exact scenario from the business case, checked after every step.
-     */
     #[Test]
     public function it_follows_the_reference_scenario_step_by_step(): void
     {
-        // 1. System calculates the line
         $line = $this->newLine('1000.00');
         $this->assertCurrentValue('$1,000.00', $line);
 
-        // 2. Source data changes, system recalculates (allowed: no manual correction yet)
         $line->recalculate(Money::fromString('1050.00'), $this->at());
         $this->assertCurrentValue('$1,050.00', $line);
 
-        // 3. Specialist adds a manual correction
         $this->adjust($line, '-45.55', 'Employee declined dental benefit; reversing deduction');
         $this->assertCurrentValue('$1,004.45', $line);
 
-        // 4. Source data changes again — must be ignored
         $line->recalculate(Money::fromString('1200.00'), $this->at());
         $this->assertCurrentValue('$1,004.45', $line);
 
-        // 5–8. More corrections, including a compensating one
         $this->adjust($line, '+100.10', 'Late correction: missed approved overtime bonus');
         $this->assertCurrentValue('$1,104.55', $line);
 
@@ -57,7 +49,6 @@ final class EarningLineTest extends TestCase
         $this->adjust($line, '+0.20', 'Correcting mistake in adjustment #4');
         $this->assertCurrentValue('$1,104.45', $line);
 
-        // Expected final audit history
         $this->assertSame('$1,050.00', $line->systemValue()->format(), 'System value is frozen at step 3');
         $this->assertSame(
             [

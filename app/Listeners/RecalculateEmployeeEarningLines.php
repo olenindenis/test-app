@@ -9,10 +9,6 @@ use App\Application\EarningLine\Handlers\RecalculateEarningLineHandler;
 use App\Events\EmployeeBaseSalaryChanged;
 use App\Models\EarningLineView;
 
-/**
- * Translates a change in source data into recalculation commands. Whether a
- * recalculation is applied or ignored is decided by the EarningLine aggregate.
- */
 final readonly class RecalculateEmployeeEarningLines
 {
     public function __construct(private RecalculateEarningLineHandler $recalculate) {}

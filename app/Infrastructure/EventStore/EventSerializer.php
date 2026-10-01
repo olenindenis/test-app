@@ -11,13 +11,10 @@ use App\Domain\EarningLine\Events\SystemRecalculationIgnored;
 use App\Domain\Shared\DomainEvent;
 use UnexpectedValueException;
 
-/** Maps stored event types back to their PHP classes. */
 final class EventSerializer
 {
-    /** @var array<string, class-string<DomainEvent>> */
     private array $map = [];
 
-    /** @param list<class-string<DomainEvent>> $eventClasses */
     public function __construct(array $eventClasses = [
         EarningLineCalculated::class,
         EarningLineRecalculated::class,

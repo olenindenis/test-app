@@ -11,7 +11,6 @@ use App\Domain\EarningLine\Money;
 use App\Domain\Shared\DomainEvent;
 use DateTimeImmutable;
 
-/** A payroll specialist added a manual correction to the line. */
 final readonly class ManualAdjustmentAdded implements DomainEvent
 {
     public function __construct(
