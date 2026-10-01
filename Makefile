@@ -1,4 +1,4 @@
-.PHONY: up down install migrate test shell
+.PHONY: up down install migrate test lint fix shell
 
 up:
 	docker compose up -d --build
@@ -15,6 +15,12 @@ migrate:
 
 test:
 	docker compose run --rm app php artisan test
+
+lint:
+	docker compose run --rm --no-deps app vendor/bin/pint --test
+
+fix:
+	docker compose run --rm --no-deps app vendor/bin/pint
 
 shell:
 	docker compose run --rm app sh
