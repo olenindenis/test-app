@@ -21,6 +21,9 @@ make lint      # перевірка стилю коду (PHP-CS-Fixer, PER-CS)
 make fix       # автоматичне виправлення стилю коду
 ```
 
+У CI (`.github/workflows/ci.yml`) на кожен push у `main` і pull request запускаються ті самі `make lint` і
+`make test`.
+
 Тести використовують окрему базу даних (`earning_lines_test`, її створює `docker/postgres/init.sql`).
 Unit-тестам база взагалі не потрібна: `php artisan test --testsuite=Unit`.
 
