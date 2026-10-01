@@ -147,16 +147,11 @@ source data changes delivered as the `EmployeeBaseSalaryChanged` event. It check
 every correction, the ignored recalculation at step 4, the compensating correction, immutability and
 rebuilding the history from the event store.
 
-The same scenario is additionally verified at other levels:
-
-* `tests/Unit/Domain/EarningLineTest.php` — pure domain, value checked after **every** step of the scenario.
-* `tests/Feature/EarningLine/ReferenceScenarioTest.php` — through command handlers, the event store and
-  projections in PostgreSQL; source data changes are delivered as the `EmployeeBaseSalaryChanged` event.
-* `tests/Feature/EarningLine/EarningLineApiTest.php` — over HTTP.
-
-Other notable tests: DB-level immutability of events (`UPDATE` / `DELETE` / `TRUNCATE` fail), concurrent
-modification detection, rebuilding projections from the event store, validation (mandatory comment,
-zero / malformed amounts), serialization round-trips, and `Money` arithmetic/formatting.
+The scenario is also checked without a database in `tests/Unit/Domain/EarningLineTest.php` (pure domain).
+Every other test covers one concern only: DB-level immutability of events and concurrent modification
+detection (`EventStoreTest`), fan-out of source data changes to unlocked lines (`SourceDataChangeTest`),
+HTTP validation and error responses (`EarningLineApiTest`), serialization round-trips and `Money`
+arithmetic/formatting (unit tests).
 
 ---
 

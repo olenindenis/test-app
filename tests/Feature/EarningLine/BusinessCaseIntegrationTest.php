@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature\EarningLine;
 
 use App\Events\EmployeeBaseSalaryChanged;
-use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
@@ -91,6 +90,9 @@ final class BusinessCaseIntegrationTest extends TestCase
         $this->runStepsUpTo(8);
 
         $this->assertSame(self::EXPECTED_AUDIT_HISTORY, $this->auditHistory());
+        $this->getLine()
+            ->assertJsonPath('data.system_value.amount', '1050.00')
+            ->assertJsonPath('data.current_value.amount', '1104.45');
     }
 
     #[Test]
@@ -130,6 +132,7 @@ final class BusinessCaseIntegrationTest extends TestCase
             ],
             array_column($events, 'type'),
         );
+        $this->assertSame(range(1, 8), array_column($events, 'version'));
         $this->assertSame(110000, $events[3]['payload']['attempted_amount_cents']);
         $this->assertSame(1, $this->getLine()->json('data.ignored_recalculations'));
     }
@@ -155,9 +158,7 @@ final class BusinessCaseIntegrationTest extends TestCase
 
         $this->putJson("/api/earning-lines/{$this->lineId}/adjustments", ['amount' => '0.00'])->assertMethodNotAllowed();
         $this->deleteJson("/api/earning-lines/{$this->lineId}/adjustments")->assertMethodNotAllowed();
-
-        $this->assertDatabaseOperationFails(fn () => DB::table('earning_line_events')->where('aggregate_id', $this->lineId)->update(['payload' => '{}']));
-        $this->assertDatabaseOperationFails(fn () => DB::table('earning_line_events')->where('aggregate_id', $this->lineId)->delete());
+        $this->deleteJson("/api/earning-lines/{$this->lineId}")->assertMethodNotAllowed();
 
         $this->assertSame($historyBefore, $this->auditHistory());
     }
@@ -170,7 +171,9 @@ final class BusinessCaseIntegrationTest extends TestCase
         DB::table('earning_line_adjustments')->delete();
         DB::table('earning_lines')->delete();
 
-        $this->artisan('earning-lines:rebuild-projections')->assertSuccessful();
+        $this->artisan('earning-lines:rebuild-projections')
+            ->expectsOutputToContain('Replayed 8 events')
+            ->assertSuccessful();
 
         $this->assertSame(self::EXPECTED_AUDIT_HISTORY, $this->auditHistory());
     }
@@ -216,16 +219,5 @@ final class BusinessCaseIntegrationTest extends TestCase
             ...array_map(fn (array $a) => [$a['label'], $a['formatted']], $line['adjustments']),
             ['Current (new) value', $line['current_value']['formatted']],
         ];
-    }
-
-    private function assertDatabaseOperationFails(callable $operation): void
-    {
-        try {
-            // A savepoint keeps the test transaction usable after the trigger raises.
-            DB::transaction($operation);
-            $this->fail('The event store accepted a modification of a stored event.');
-        } catch (QueryException $e) {
-            $this->assertStringContainsString('append-only', $e->getMessage());
-        }
     }
 }
