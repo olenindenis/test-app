@@ -41,7 +41,7 @@ final readonly class SystemRecalculationIgnored implements DomainEvent
         return [
             'line_id' => $this->lineId->value,
             'attempted_amount_cents' => $this->attemptedAmount->cents,
-            'attempted_at' => $this->attemptedAt->format(DATE_RFC3339_EXTENDED),
+            'attempted_at' => $this->attemptedAt->format(self::DATE_FORMAT),
         ];
     }
 

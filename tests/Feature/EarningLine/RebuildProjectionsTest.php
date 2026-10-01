@@ -11,6 +11,7 @@ use App\Application\EarningLine\Handlers\AddManualAdjustmentHandler;
 use App\Application\EarningLine\Handlers\CalculateEarningLineHandler;
 use App\Application\EarningLine\Handlers\RecalculateEarningLineHandler;
 use App\Application\EarningLine\Queries\GetEarningLineHistory;
+use App\Http\Resources\EarningLineResource;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,16 +30,21 @@ final class RebuildProjectionsTest extends TestCase
         app(RecalculateEarningLineHandler::class)->handle(new RecalculateEarningLine($lineId, '1100.00'));
         app(AddManualAdjustmentHandler::class)->handle(new AddManualAdjustment($lineId, '+100.10', 'Overtime', 'specialist-1'));
 
-        $before = app(GetEarningLineHistory::class)->handle($lineId)->toArray();
+        $before = $this->history($lineId);
 
         // Simulate lost / corrupted read models.
         DB::table('earning_line_adjustments')->delete();
-        DB::table('earning_lines')->update(['current_value_cents' => 0]);
+        DB::table('earning_lines')->update(['system_value_cents' => 0, 'adjustments_total_cents' => 0]);
 
         $this->artisan('earning-lines:rebuild-projections')
             ->expectsOutputToContain('Replayed 5 events')
             ->assertSuccessful();
 
-        $this->assertSame($before, app(GetEarningLineHistory::class)->handle($lineId)->toArray());
+        $this->assertSame($before, $this->history($lineId));
+    }
+
+    private function history(string $lineId): array
+    {
+        return EarningLineResource::make(app(GetEarningLineHistory::class)->handle($lineId))->resolve();
     }
 }

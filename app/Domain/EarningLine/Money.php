@@ -12,6 +12,9 @@ use InvalidArgumentException;
  */
 final readonly class Money
 {
+    /** Decimal amount with an optional sign and at most two decimals, e.g. "-45.55". */
+    public const string PATTERN = '/^([+-])?(\d{1,12})(?:\.(\d{1,2}))?$/';
+
     private const string MINUS_SIGN = "\u{2212}";
 
     private function __construct(public int $cents) {}
@@ -21,17 +24,12 @@ final readonly class Money
         return new self($cents);
     }
 
-    public static function zero(): self
-    {
-        return new self(0);
-    }
-
     /** Parses a decimal string such as "1050", "-45.55" or "+100.1". */
     public static function fromString(string $amount): self
     {
         $amount = trim($amount);
 
-        if (preg_match('/^([+-])?(\d+)(?:\.(\d{1,2}))?$/', $amount, $m) !== 1) {
+        if (preg_match(self::PATTERN, $amount, $m) !== 1) {
             throw new InvalidArgumentException(sprintf('"%s" is not a valid monetary amount.', $amount));
         }
 

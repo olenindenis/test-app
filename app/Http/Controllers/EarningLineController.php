@@ -12,10 +12,12 @@ use App\Application\EarningLine\Handlers\CalculateEarningLineHandler;
 use App\Application\EarningLine\Handlers\RecalculateEarningLineHandler;
 use App\Application\EarningLine\Queries\GetEarningLineHistory;
 use App\Domain\EarningLine\EarningLineId;
+use App\Domain\EarningLine\Exceptions\EarningLineNotFound;
 use App\Domain\Shared\DomainEvent;
 use App\Http\Requests\AddManualAdjustmentRequest;
 use App\Http\Requests\CalculateEarningLineRequest;
 use App\Http\Requests\RecalculateEarningLineRequest;
+use App\Http\Resources\EarningLineResource;
 use App\Infrastructure\EventStore\EventStore;
 use Illuminate\Http\JsonResponse;
 
@@ -27,7 +29,7 @@ final class EarningLineController extends Controller
     {
         $id = $handler->handle(new CalculateEarningLine($request->validated('employee_id'), $request->validated('amount')));
 
-        return $this->showLine($id->value, status: 201);
+        return $this->showLine($id->value)->setStatusCode(201);
     }
 
     public function show(string $lineId): JsonResponse
@@ -51,15 +53,18 @@ final class EarningLineController extends Controller
             $request->validated('author_id'),
         ));
 
-        return $this->showLine($lineId, status: 201);
+        return $this->showLine($lineId)->setStatusCode(201);
     }
 
     /** The raw, immutable event stream of a line — the complete audit log. */
     public function events(string $lineId, EventStore $eventStore): JsonResponse
     {
-        $this->history->handle($lineId); // 404 for unknown lines
+        $id = EarningLineId::fromString($lineId);
+        $stream = $eventStore->load($id->value);
 
-        $stream = $eventStore->load(EarningLineId::fromString($lineId)->value);
+        if ($stream === []) {
+            throw EarningLineNotFound::withId($id);
+        }
 
         $events = array_map(fn (DomainEvent $event, int $index): array => [
             'version' => $index + 1,
@@ -71,8 +76,8 @@ final class EarningLineController extends Controller
         return response()->json(['data' => $events]);
     }
 
-    private function showLine(string $lineId, int $status = 200): JsonResponse
+    private function showLine(string $lineId): JsonResponse
     {
-        return response()->json(['data' => $this->history->handle($lineId)->toArray()], $status);
+        return EarningLineResource::make($this->history->handle($lineId))->response();
     }
 }

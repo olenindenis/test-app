@@ -65,6 +65,6 @@ final class MoneyTest extends TestCase
         $this->assertSame("\u{2212}$0.20", Money::fromCents(-20)->formatSigned());
         $this->assertSame('-45.55', Money::fromCents(-4555)->toDecimalString());
         $this->assertSame('1234567.05', Money::fromCents(123456705)->toDecimalString());
-        $this->assertSame('$0.00', Money::zero()->format());
+        $this->assertSame('$0.00', Money::fromCents(0)->format());
     }
 }

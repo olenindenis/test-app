@@ -40,7 +40,7 @@ final readonly class EarningLineCalculated implements DomainEvent
             'line_id' => $this->lineId->value,
             'employee_id' => $this->employeeId,
             'amount_cents' => $this->amount->cents,
-            'calculated_at' => $this->calculatedAt->format(DATE_RFC3339_EXTENDED),
+            'calculated_at' => $this->calculatedAt->format(self::DATE_FORMAT),
         ];
     }
 

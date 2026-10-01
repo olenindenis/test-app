@@ -24,9 +24,4 @@ final readonly class EarningLineId
 
         return new self(strtolower($value));
     }
-
-    public function __toString(): string
-    {
-        return $this->value;
-    }
 }

@@ -28,8 +28,6 @@ final class EarningLine extends AggregateRoot
 {
     private EarningLineId $id;
 
-    private string $employeeId;
-
     private Money $systemValue;
 
     /** @var list<ManualAdjustment> */
@@ -80,11 +78,6 @@ final class EarningLine extends AggregateRoot
         return $this->id;
     }
 
-    public function employeeId(): string
-    {
-        return $this->employeeId;
-    }
-
     /** The system-calculated value; frozen once the first manual adjustment is added. */
     public function systemValue(): Money
     {
@@ -124,7 +117,6 @@ final class EarningLine extends AggregateRoot
     private function applyCalculated(EarningLineCalculated $event): void
     {
         $this->id = $event->lineId;
-        $this->employeeId = $event->employeeId;
         $this->systemValue = $event->amount;
     }
 }

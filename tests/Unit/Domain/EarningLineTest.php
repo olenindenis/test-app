@@ -223,7 +223,7 @@ final class EarningLineTest extends TestCase
         $this->assertCount(2, $rebuilt->adjustments());
         $this->assertSame(5, $rebuilt->version());
         $this->assertSame(5, $rebuilt->persistedVersion());
-        $this->assertSame([], $rebuilt->pendingEvents());
+        $this->assertSame([], $rebuilt->releaseEvents());
     }
 
     #[Test]

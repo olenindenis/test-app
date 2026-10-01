@@ -12,6 +12,9 @@ use DateTimeImmutable;
  */
 interface DomainEvent
 {
+    /** Timestamp format used in event payloads; keeps microsecond precision. */
+    public const string DATE_FORMAT = 'Y-m-d\TH:i:s.uP';
+
     /** Stable name used to persist the event (must never change once events are stored). */
     public static function eventType(): string;
 

@@ -40,7 +40,7 @@ final readonly class EarningLineRecalculated implements DomainEvent
             'line_id' => $this->lineId->value,
             'previous_amount_cents' => $this->previousAmount->cents,
             'new_amount_cents' => $this->newAmount->cents,
-            'recalculated_at' => $this->recalculatedAt->format(DATE_RFC3339_EXTENDED),
+            'recalculated_at' => $this->recalculatedAt->format(self::DATE_FORMAT),
         ];
     }
 

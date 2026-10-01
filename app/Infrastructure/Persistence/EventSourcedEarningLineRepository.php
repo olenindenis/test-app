@@ -38,6 +38,10 @@ final readonly class EventSourcedEarningLineRepository implements EarningLineRep
 
     public function save(EarningLine $line): void
     {
+        if ($line->pendingEvents() === []) {
+            return;
+        }
+
         $this->db->transaction(function () use ($line): void {
             $expectedVersion = $line->persistedVersion();
             $newEvents = $line->releaseEvents();

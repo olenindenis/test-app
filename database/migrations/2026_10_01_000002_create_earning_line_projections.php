@@ -17,13 +17,9 @@ return new class extends Migration
             $table->string('employee_id')->index();
             $table->bigInteger('system_value_cents');
             $table->bigInteger('adjustments_total_cents')->default(0);
-            $table->bigInteger('current_value_cents');
-            $table->boolean('is_locked')->default(false);
+            // Set by the first manual adjustment; a non-null value means the line is locked.
             $table->timestampTz('locked_at', precision: 6)->nullable();
             $table->unsignedInteger('ignored_recalculations')->default(0);
-            $table->unsignedInteger('version');
-            $table->timestampTz('calculated_at', precision: 6);
-            $table->timestampTz('updated_at', precision: 6);
         });
 
         Schema::create('earning_line_adjustments', function (Blueprint $table) {

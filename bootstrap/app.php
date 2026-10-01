@@ -7,6 +7,9 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -23,7 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
 
-        $exceptions->render(fn (EarningLineNotFound $e) => response()->json(['message' => $e->getMessage()], 404));
-        $exceptions->render(fn (InvalidManualAdjustment $e) => response()->json(['message' => $e->getMessage()], 422));
-        $exceptions->render(fn (ConcurrencyException $e) => response()->json(['message' => $e->getMessage()], 409));
+        $exceptions->map(EarningLineNotFound::class, fn (EarningLineNotFound $e) => new NotFoundHttpException($e->getMessage(), $e));
+        $exceptions->map(InvalidManualAdjustment::class, fn (InvalidManualAdjustment $e) => new UnprocessableEntityHttpException($e->getMessage(), $e));
+        $exceptions->map(ConcurrencyException::class, fn (ConcurrencyException $e) => new ConflictHttpException($e->getMessage(), $e));
     })->create();

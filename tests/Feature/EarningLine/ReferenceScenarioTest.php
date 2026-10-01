@@ -12,6 +12,7 @@ use App\Application\EarningLine\Queries\GetEarningLineHistory;
 use App\Domain\EarningLine\EarningLineId;
 use App\Domain\EarningLine\EarningLineRepository;
 use App\Events\EmployeeBaseSalaryChanged;
+use App\Http\Resources\EarningLineResource;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
@@ -60,7 +61,7 @@ final class ReferenceScenarioTest extends TestCase
         $this->adjust('+0.20', 'Correcting mistake in adjustment #4');
         $this->assertCurrentValue('$1,104.45');
 
-        $history = app(GetEarningLineHistory::class)->handle($this->lineId)->toArray();
+        $history = EarningLineResource::make(app(GetEarningLineHistory::class)->handle($this->lineId))->resolve();
 
         $this->assertSame('$1,050.00', $history['system_value']['formatted']);
         $this->assertTrue($history['is_locked']);
@@ -111,9 +112,9 @@ final class ReferenceScenarioTest extends TestCase
         EmployeeBaseSalaryChanged::dispatch(self::EMPLOYEE, '2000.00');
 
         $query = app(GetEarningLineHistory::class);
-        $this->assertSame('$1,005.00', $query->handle($locked)->currentValue->format());
-        $this->assertSame('$2,000.00', $query->handle($unlocked)->currentValue->format());
-        $this->assertSame('$1,000.00', $query->handle($otherEmployee)->currentValue->format());
+        $this->assertSame('$1,005.00', $query->handle($locked)->currentValue()->format());
+        $this->assertSame('$2,000.00', $query->handle($unlocked)->currentValue()->format());
+        $this->assertSame('$1,000.00', $query->handle($otherEmployee)->currentValue()->format());
     }
 
     private function adjust(string $amount, string $comment): void
@@ -123,6 +124,6 @@ final class ReferenceScenarioTest extends TestCase
 
     private function assertCurrentValue(string $expected): void
     {
-        $this->assertSame($expected, app(GetEarningLineHistory::class)->handle($this->lineId)->currentValue->format());
+        $this->assertSame($expected, app(GetEarningLineHistory::class)->handle($this->lineId)->currentValue()->format());
     }
 }

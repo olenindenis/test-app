@@ -11,6 +11,6 @@ final class EarningLineNotFound extends DomainException
 {
     public static function withId(EarningLineId $id): self
     {
-        return new self(sprintf('Earning line "%s" does not exist.', $id));
+        return new self(sprintf('Earning line "%s" does not exist.', $id->value));
     }
 }

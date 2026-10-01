@@ -29,12 +29,11 @@ final readonly class PostgresEventStore implements EventStore
             'version' => ++$version,
             'event_type' => $event::eventType(),
             'payload' => $this->serializer->serialize($event),
-            'occurred_at' => $event->occurredAt()->format('Y-m-d H:i:s.uP'),
+            'occurred_at' => $event->occurredAt()->format(DomainEvent::DATE_FORMAT),
         ], $events);
 
         try {
-            // A savepoint keeps the surrounding transaction usable if the insert fails.
-            $this->db->transaction(fn () => $this->db->table(self::TABLE)->insert($rows));
+            $this->db->table(self::TABLE)->insert($rows);
         } catch (UniqueConstraintViolationException $e) {
             throw ConcurrencyException::forStream($aggregateId, $expectedVersion, $e);
         }
@@ -52,7 +51,7 @@ final readonly class PostgresEventStore implements EventStore
 
     public function all(): iterable
     {
-        foreach ($this->db->table(self::TABLE)->orderBy('id')->lazy(500) as $row) {
+        foreach ($this->db->table(self::TABLE)->select(['id', 'event_type', 'payload'])->lazyById(500) as $row) {
             yield $this->serializer->deserialize($row->event_type, $row->payload);
         }
     }

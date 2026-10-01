@@ -4,13 +4,9 @@ services:
     working_dir: /app
     volumes:
       - .:/app
-    environment:
-      DB_CONNECTION: pgsql
-      DB_HOST: postgres
-      DB_PORT: 5432
     ports:
       - "8000:8000"
-    command: php -S 0.0.0.0:8000 -t public
+    command: php artisan serve --host=0.0.0.0 --port=8000
     depends_on:
       postgres:
         condition: service_healthy
@@ -22,7 +18,7 @@ services:
       POSTGRES_USER: alcor
       POSTGRES_PASSWORD: secret
     ports:
-      - "5433:5432"
+      - "5433:5432" # for DB clients on the host only; the app connects via the "postgres" service
     volumes:
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - pgdata:/var/lib/postgresql/data

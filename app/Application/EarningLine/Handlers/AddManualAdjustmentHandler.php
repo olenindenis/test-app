@@ -8,18 +8,17 @@ use App\Application\EarningLine\Commands\AddManualAdjustment;
 use App\Domain\EarningLine\AdjustmentComment;
 use App\Domain\EarningLine\EarningLineId;
 use App\Domain\EarningLine\EarningLineRepository;
-use App\Domain\EarningLine\ManualAdjustment;
 use App\Domain\EarningLine\Money;
 
 final readonly class AddManualAdjustmentHandler
 {
     public function __construct(private EarningLineRepository $lines) {}
 
-    public function handle(AddManualAdjustment $command): ManualAdjustment
+    public function handle(AddManualAdjustment $command): void
     {
         $line = $this->lines->get(EarningLineId::fromString($command->lineId));
 
-        $adjustment = $line->addManualAdjustment(
+        $line->addManualAdjustment(
             Money::fromString($command->amount),
             AdjustmentComment::fromString($command->comment),
             $command->authorId,
@@ -27,7 +26,5 @@ final readonly class AddManualAdjustmentHandler
         );
 
         $this->lines->save($line);
-
-        return $adjustment;
     }
 }

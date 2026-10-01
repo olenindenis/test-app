@@ -18,8 +18,7 @@ final class RebuildEarningLineProjections extends Command
     public function handle(EventStore $eventStore, EarningLineProjector $projector): int
     {
         $replayed = DB::transaction(function () use ($eventStore, $projector): int {
-            DB::table('earning_line_adjustments')->delete();
-            DB::table('earning_lines')->delete();
+            DB::statement('TRUNCATE earning_line_adjustments, earning_lines');
 
             $count = 0;
             foreach ($eventStore->all() as $event) {

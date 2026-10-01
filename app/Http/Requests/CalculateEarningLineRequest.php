@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Domain\EarningLine\Money;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class CalculateEarningLineRequest extends FormRequest
@@ -12,7 +13,7 @@ final class CalculateEarningLineRequest extends FormRequest
     {
         return [
             'employee_id' => ['required', 'string', 'max:255'],
-            'amount' => ['required', 'string', AmountRule::REGEX],
+            'amount' => ['required', 'string', 'regex:'.Money::PATTERN],
         ];
     }
 }

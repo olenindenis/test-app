@@ -51,7 +51,7 @@ final readonly class ManualAdjustmentAdded implements DomainEvent
             'amount_cents' => $this->amount->cents,
             'comment' => $this->comment->value,
             'author_id' => $this->authorId,
-            'added_at' => $this->addedAt->format(DATE_RFC3339_EXTENDED),
+            'added_at' => $this->addedAt->format(self::DATE_FORMAT),
         ];
     }
 
