@@ -12,7 +12,7 @@ final class RecalculateEarningLineRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'amount' => ['required', 'string', 'regex:'.Money::PATTERN],
+            'amount' => ['required', 'string', 'regex:' . Money::PATTERN],
         ];
     }
 }

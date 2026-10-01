@@ -24,7 +24,7 @@ final readonly class PostgresEventStore implements EventStore
         }
 
         $version = $expectedVersion;
-        $rows = array_map(fn (DomainEvent $event): array => [
+        $rows = array_map(fn(DomainEvent $event): array => [
             'aggregate_id' => $aggregateId,
             'version' => ++$version,
             'event_type' => $event::eventType(),
@@ -45,7 +45,7 @@ final readonly class PostgresEventStore implements EventStore
             ->where('aggregate_id', $aggregateId)
             ->orderBy('version')
             ->get(['event_type', 'payload'])
-            ->map(fn (object $row): DomainEvent => $this->serializer->deserialize($row->event_type, $row->payload))
+            ->map(fn(object $row): DomainEvent => $this->serializer->deserialize($row->event_type, $row->payload))
             ->all();
     }
 

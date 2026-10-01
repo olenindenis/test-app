@@ -17,7 +17,7 @@ make install   # composer install + .env всередині контейнера
 make up        # запуск PHP-застосунку (http://localhost:8000) і PostgreSQL
 make migrate   # створення таблиць у dev-базі
 make test      # запуск PHPUnit-тестів на PostgreSQL у Docker
-make lint      # перевірка стилю коду (Laravel Pint)
+make lint      # перевірка стилю коду (PHP-CS-Fixer, PER-CS)
 make fix       # автоматичне виправлення стилю коду
 ```
 

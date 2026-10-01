@@ -17,10 +17,10 @@ test:
 	docker compose run --rm app php artisan test
 
 lint:
-	docker compose run --rm --no-deps app vendor/bin/pint --test
+	docker compose run --rm --no-deps app vendor/bin/php-cs-fixer check --diff
 
 fix:
-	docker compose run --rm --no-deps app vendor/bin/pint
+	docker compose run --rm --no-deps app vendor/bin/php-cs-fixer fix
 
 shell:
 	docker compose run --rm app sh

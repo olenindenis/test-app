@@ -14,7 +14,7 @@ abstract class AggregateRoot
 
     public static function reconstitute(iterable $history): static
     {
-        $aggregate = new static;
+        $aggregate = new static();
 
         foreach ($history as $event) {
             $aggregate->applyEvent($event);

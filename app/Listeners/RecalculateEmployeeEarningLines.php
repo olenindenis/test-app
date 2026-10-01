@@ -18,7 +18,7 @@ final readonly class RecalculateEmployeeEarningLines
         EarningLineView::query()
             ->where('employee_id', $event->employeeId)
             ->pluck('id')
-            ->each(fn (string $lineId) => $this->recalculate->handle(
+            ->each(fn(string $lineId) => $this->recalculate->handle(
                 new RecalculateEarningLine($lineId, $event->newBaseSalary),
             ));
     }

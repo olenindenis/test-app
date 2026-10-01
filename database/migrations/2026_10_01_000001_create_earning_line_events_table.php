@@ -5,8 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         Schema::create('earning_line_events', function (Blueprint $table) {
@@ -22,20 +21,20 @@ return new class extends Migration
         });
 
         DB::unprepared(<<<'SQL'
-            CREATE OR REPLACE FUNCTION earning_line_events_are_immutable() RETURNS trigger AS $$
-            BEGIN
-                RAISE EXCEPTION 'earning_line_events is append-only: % is not allowed', TG_OP;
-            END;
-            $$ LANGUAGE plpgsql;
+                CREATE OR REPLACE FUNCTION earning_line_events_are_immutable() RETURNS trigger AS $$
+                BEGIN
+                    RAISE EXCEPTION 'earning_line_events is append-only: % is not allowed', TG_OP;
+                END;
+                $$ LANGUAGE plpgsql;
 
-            CREATE TRIGGER earning_line_events_no_update_or_delete
-                BEFORE UPDATE OR DELETE ON earning_line_events
-                FOR EACH ROW EXECUTE FUNCTION earning_line_events_are_immutable();
+                CREATE TRIGGER earning_line_events_no_update_or_delete
+                    BEFORE UPDATE OR DELETE ON earning_line_events
+                    FOR EACH ROW EXECUTE FUNCTION earning_line_events_are_immutable();
 
-            CREATE TRIGGER earning_line_events_no_truncate
-                BEFORE TRUNCATE ON earning_line_events
-                FOR EACH STATEMENT EXECUTE FUNCTION earning_line_events_are_immutable();
-        SQL);
+                CREATE TRIGGER earning_line_events_no_truncate
+                    BEFORE TRUNCATE ON earning_line_events
+                    FOR EACH STATEMENT EXECUTE FUNCTION earning_line_events_are_immutable();
+            SQL);
     }
 
     public function down(): void

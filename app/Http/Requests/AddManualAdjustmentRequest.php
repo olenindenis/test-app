@@ -13,8 +13,8 @@ final class AddManualAdjustmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'amount' => ['required', 'string', 'regex:'.Money::PATTERN],
-            'comment' => ['required', 'string', 'max:'.AdjustmentComment::MAX_LENGTH],
+            'amount' => ['required', 'string', 'regex:' . Money::PATTERN],
+            'comment' => ['required', 'string', 'max:' . AdjustmentComment::MAX_LENGTH],
             'author_id' => ['required', 'string', 'max:255'],
         ];
     }

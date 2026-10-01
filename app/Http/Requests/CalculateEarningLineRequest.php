@@ -13,7 +13,7 @@ final class CalculateEarningLineRequest extends FormRequest
     {
         return [
             'employee_id' => ['required', 'string', 'max:255'],
-            'amount' => ['required', 'string', 'regex:'.Money::PATTERN],
+            'amount' => ['required', 'string', 'regex:' . Money::PATTERN],
         ];
     }
 }

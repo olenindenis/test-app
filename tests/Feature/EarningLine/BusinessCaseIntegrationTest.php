@@ -41,10 +41,10 @@ final class BusinessCaseIntegrationTest extends TestCase
 
     private const array EXPECTED_AUDIT_HISTORY = [
         ['System value (frozen at step 3)', '$1,050.00'],
-        ['Adjustment 1', self::MINUS.'$45.55'],
+        ['Adjustment 1', self::MINUS . '$45.55'],
         ['Adjustment 2', '+$100.10'],
-        ['Adjustment 3', self::MINUS.'$0.10'],
-        ['Adjustment 4', self::MINUS.'$0.20'],
+        ['Adjustment 3', self::MINUS . '$0.10'],
+        ['Adjustment 4', self::MINUS . '$0.20'],
         ['Adjustment 5', '+$0.20'],
         ['Current (new) value', '$1,104.45'],
     ];
@@ -88,7 +88,7 @@ final class BusinessCaseIntegrationTest extends TestCase
         $this->runStepsUpTo(8);
 
         $adjustments = $this->getLine()->json('data.adjustments');
-        $expected = array_values(array_filter(self::STEPS, fn (array $step) => $step[0] === self::ADJUST));
+        $expected = array_values(array_filter(self::STEPS, fn(array $step) => $step[0] === self::ADJUST));
 
         $this->assertCount(count($expected), $adjustments);
         foreach ($expected as $i => [, $amount, $comment]) {
@@ -202,7 +202,7 @@ final class BusinessCaseIntegrationTest extends TestCase
 
         return [
             ['System value (frozen at step 3)', $line['system_value']['formatted']],
-            ...array_map(fn (array $a) => [$a['label'], $a['formatted']], $line['adjustments']),
+            ...array_map(fn(array $a) => [$a['label'], $a['formatted']], $line['adjustments']),
             ['Current (new) value', $line['current_value']['formatted']],
         ];
     }

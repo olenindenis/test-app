@@ -58,7 +58,7 @@ final class EarningLineTest extends TestCase
                 [4, "\u{2212}$0.20"],
                 [5, '+$0.20'],
             ],
-            array_map(fn (ManualAdjustment $a) => [$a->number, $a->amount->formatSigned()], $line->adjustments()),
+            array_map(fn(ManualAdjustment $a) => [$a->number, $a->amount->formatSigned()], $line->adjustments()),
         );
         $this->assertSame('$1,104.45', $line->currentValue()->format());
     }
@@ -73,7 +73,7 @@ final class EarningLineTest extends TestCase
 
         $this->assertSame(
             [EarningLineCalculated::class, EarningLineRecalculated::class, ManualAdjustmentAdded::class, SystemRecalculationIgnored::class],
-            array_map(fn (object $e) => $e::class, $line->releaseEvents()),
+            array_map(fn(object $e) => $e::class, $line->releaseEvents()),
         );
         $this->assertSame([], $line->releaseEvents(), 'Events are released only once');
     }
@@ -232,14 +232,14 @@ final class EarningLineTest extends TestCase
     public function adjustments_cannot_be_edited_or_removed_through_the_model(): void
     {
         $publicMethods = array_map(
-            fn (ReflectionMethod $m) => $m->getName(),
-            (new ReflectionClass(EarningLine::class))->getMethods(ReflectionMethod::IS_PUBLIC),
+            fn(ReflectionMethod $m) => $m->getName(),
+            new ReflectionClass(EarningLine::class)->getMethods(ReflectionMethod::IS_PUBLIC),
         );
 
         foreach ($publicMethods as $method) {
             $this->assertDoesNotMatchRegularExpression('/^(update|edit|remove|delete|change|replace)/i', $method);
         }
-        $this->assertTrue((new ReflectionClass(ManualAdjustment::class))->isReadOnly());
+        $this->assertTrue(new ReflectionClass(ManualAdjustment::class)->isReadOnly());
     }
 
     private function newLine(string $amount): EarningLine
@@ -254,7 +254,7 @@ final class EarningLineTest extends TestCase
 
     private function at(): DateTimeImmutable
     {
-        return new DateTimeImmutable;
+        return new DateTimeImmutable();
     }
 
     private function assertCurrentValue(string $expected, EarningLine $line): void

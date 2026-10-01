@@ -19,9 +19,9 @@ final class EarningLineResource extends JsonResource
             'is_locked' => $this->isLocked(),
             'locked_at' => $this->locked_at?->format(DATE_RFC3339_EXTENDED),
             'system_value' => self::money($this->systemValue()),
-            'adjustments' => $this->adjustments->map(fn (EarningLineAdjustmentView $a): array => [
+            'adjustments' => $this->adjustments->map(fn(EarningLineAdjustmentView $a): array => [
                 'number' => $a->number,
-                'label' => 'Adjustment '.$a->number,
+                'label' => 'Adjustment ' . $a->number,
                 'amount' => Money::fromCents($a->amount_cents)->toDecimalString(),
                 'formatted' => Money::fromCents($a->amount_cents)->formatSigned(),
                 'comment' => $a->comment,

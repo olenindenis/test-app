@@ -65,7 +65,7 @@ final class EarningLineController extends Controller
             throw EarningLineNotFound::withId($id);
         }
 
-        $events = array_map(fn (DomainEvent $event, int $index): array => [
+        $events = array_map(fn(DomainEvent $event, int $index): array => [
             'version' => $index + 1,
             'type' => $event::eventType(),
             'occurred_at' => $event->occurredAt()->format(DATE_RFC3339_EXTENDED),

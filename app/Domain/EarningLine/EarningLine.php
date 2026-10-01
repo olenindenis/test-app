@@ -23,7 +23,7 @@ final class EarningLine extends AggregateRoot
 
     public static function calculate(EarningLineId $id, string $employeeId, Money $amount, DateTimeImmutable $at): self
     {
-        $line = new self;
+        $line = new self();
         $line->recordThat(new EarningLineCalculated($id, $employeeId, $amount, $at));
 
         return $line;
@@ -74,7 +74,7 @@ final class EarningLine extends AggregateRoot
     {
         return array_reduce(
             $this->adjustments,
-            static fn (Money $total, ManualAdjustment $adjustment): Money => $total->add($adjustment->amount),
+            static fn(Money $total, ManualAdjustment $adjustment): Money => $total->add($adjustment->amount),
             $this->systemValue,
         );
     }

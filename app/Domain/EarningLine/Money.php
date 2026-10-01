@@ -54,23 +54,23 @@ final readonly class Money
 
     public function toDecimalString(): string
     {
-        return ($this->isNegative() ? '-' : '').$this->absoluteDecimal(thousands: '');
+        return ($this->isNegative() ? '-' : '') . $this->absoluteDecimal(thousands: '');
     }
 
     public function format(): string
     {
-        return ($this->isNegative() ? self::MINUS_SIGN : '').'$'.$this->absoluteDecimal(thousands: ',');
+        return ($this->isNegative() ? self::MINUS_SIGN : '') . '$' . $this->absoluteDecimal(thousands: ',');
     }
 
     public function formatSigned(): string
     {
-        return $this->isNegative() ? $this->format() : '+'.$this->format();
+        return $this->isNegative() ? $this->format() : '+' . $this->format();
     }
 
     private function absoluteDecimal(string $thousands): string
     {
         $abs = abs($this->cents);
 
-        return number_format(intdiv($abs, 100), 0, '', $thousands).'.'.str_pad((string) ($abs % 100), 2, '0', STR_PAD_LEFT);
+        return number_format(intdiv($abs, 100), 0, '', $thousands) . '.' . str_pad((string) ($abs % 100), 2, '0', STR_PAD_LEFT);
     }
 }

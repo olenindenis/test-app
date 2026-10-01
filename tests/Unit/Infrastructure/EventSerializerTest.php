@@ -25,7 +25,7 @@ final class EventSerializerTest extends TestCase
         $line->addManualAdjustment(Money::fromString('-45.55'), AdjustmentComment::fromString('Declined benefit — ünïcødé'), 'specialist-1', $at);
         $line->recalculate(Money::fromString('1200'), $at);
 
-        $serializer = new EventSerializer;
+        $serializer = new EventSerializer();
 
         foreach ($line->releaseEvents() as $event) {
             $restored = $serializer->deserialize($event::eventType(), $serializer->serialize($event));
@@ -39,6 +39,6 @@ final class EventSerializerTest extends TestCase
     {
         $this->expectException(UnexpectedValueException::class);
 
-        (new EventSerializer)->deserialize('something.else', '{}');
+        new EventSerializer()->deserialize('something.else', '{}');
     }
 }
