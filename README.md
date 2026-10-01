@@ -1,117 +1,116 @@
-# Earning Line — History of Manual Adjustments
+# Earning Line — історія ручних коригувань
 
-Proof of concept for the Alcor OS payroll platform: an **earning line** (e.g. an employee's base salary)
-is calculated automatically by the system, can be manually corrected by a payroll specialist, and
-always exposes its current value together with a complete, tamper-proof audit trail.
+Proof of concept для payroll-платформи Alcor OS: **рядок нарахування** (earning line, наприклад базова
+зарплата працівника) автоматично розраховується системою, може бути вручну скоригований payroll-спеціалістом
+і завжди показує поточне значення разом із повним audit trail, який неможливо підробити.
 
-Built with **Laravel 13 / PHP 8.4**, an **event-sourced** domain model and **PostgreSQL**.
+Побудовано на **Laravel 13 / PHP 8.4** з доменною моделлю на основі **event sourcing** та **PostgreSQL**.
 
 ---
 
-## Quick start
+## Швидкий старт
 
-Requirements: Docker + `make`.
+Потрібно: Docker + `make`.
 
 ```bash
-make install   # composer install + .env inside the container
-make up        # start PHP app (http://localhost:8000) and PostgreSQL
-make migrate   # create tables in the dev database
-make test      # run the PHPUnit suite against PostgreSQL in Docker
+make install   # composer install + .env всередині контейнера
+make up        # запуск PHP-застосунку (http://localhost:8000) і PostgreSQL
+make migrate   # створення таблиць у dev-базі
+make test      # запуск PHPUnit-тестів на PostgreSQL у Docker
 ```
 
-The test suite uses a dedicated database (`earning_lines_test`, created by `docker/postgres/init.sql`).
-Unit tests don't need a database at all: `php artisan test --testsuite=Unit`.
+Тести використовують окрему базу даних (`earning_lines_test`, її створює `docker/postgres/init.sql`).
+Unit-тестам база взагалі не потрібна: `php artisan test --testsuite=Unit`.
 
 ---
 
-## How it works
+## Як це працює
 
-### Why event sourcing
+### Чому event sourcing
 
-The business rules map almost one-to-one onto an append-only log of events:
+Бізнес-правила майже один в один лягають на журнал подій, у який можна лише дописувати (append-only):
 
-| Business rule | How the model enforces it |
+| Бізнес-правило | Як модель його забезпечує |
 |---|---|
-| Corrections can never be edited or silently deleted | Every change is an immutable event appended to `earning_line_events`. The aggregate has no edit/delete methods, there are no PUT/PATCH/DELETE endpoints, and a **PostgreSQL trigger rejects `UPDATE`, `DELETE` and `TRUNCATE`** on the event table. |
-| Mistakes are fixed by a new, compensating correction | The only way to change the value is `addManualAdjustment()`, which appends another event. |
-| After the first correction, system recalculation must not affect the line | `EarningLine::recalculate()` checks whether any adjustment exists; if so it records `SystemRecalculationIgnored` instead of changing the value. |
-| Current value and full history are available at any time | Current value = frozen system value + Σ adjustments. The history is available both as a read model (`GET /api/earning-lines/{id}`) and as the raw event stream (`GET /api/earning-lines/{id}/events`). |
+| Корекції ніколи не можна змінити чи непомітно видалити | Кожна зміна — це незмінна подія, дописана в `earning_line_events`. В агрегаті немає методів редагування/видалення, немає PUT/PATCH/DELETE-ендпоінтів, а **тригер PostgreSQL відхиляє `UPDATE`, `DELETE` і `TRUNCATE`** у таблиці подій. |
+| Помилки виправляються новою, компенсуючою корекцією | Єдиний спосіб змінити значення — `addManualAdjustment()`, який дописує ще одну подію. |
+| Після першої корекції системний перерахунок не повинен впливати на рядок | `EarningLine::recalculate()` перевіряє, чи є хоч одна корекція; якщо так — записує `SystemRecalculationIgnored` замість зміни значення. |
+| Поточне значення і повна історія доступні в будь-який момент | Поточне значення = заморожене системне значення + Σ корекцій. Історія доступна і як read model (`GET /api/earning-lines/{id}`), і як сирий потік подій (`GET /api/earning-lines/{id}/events`). |
 
-### Domain events
+### Доменні події
 
-| Event | When |
+| Подія | Коли |
 |---|---|
-| `EarningLineCalculated` | The system calculates the line for the first time |
-| `EarningLineRecalculated` | Source data changed and the line has no manual adjustments yet |
-| `ManualAdjustmentAdded` | A specialist adds a correction (amount, mandatory comment, author, sequence number) |
-| `SystemRecalculationIgnored` | Source data changed, but the line is already locked by a manual adjustment |
+| `EarningLineCalculated` | Система вперше розраховує рядок |
+| `EarningLineRecalculated` | Змінилися вихідні дані, а рядок ще не має ручних корекцій |
+| `ManualAdjustmentAdded` | Спеціаліст додає корекцію (сума, обов'язковий коментар, автор, порядковий номер) |
+| `SystemRecalculationIgnored` | Змінилися вихідні дані, але рядок уже заблокований ручною корекцією |
 
-### Flow
+### Потік даних
 
 ```
-             HR / source system                        Payroll specialist
+         HR / система-джерело даних                    Payroll-спеціаліст
                      │                                         │
-     EmployeeBaseSalaryChanged (integration event)     HTTP POST /adjustments
+     EmployeeBaseSalaryChanged (інтеграційна подія)    HTTP POST /adjustments
                      │                                         │
        RecalculateEmployeeEarningLines (listener)       AddManualAdjustmentHandler
                      │                                         │
-                     └──────────────► EarningLine aggregate ◄──┘
-                                      (business rules, emits domain events)
+                     └──────────────► агрегат EarningLine ◄────┘
+                                  (бізнес-правила, генерує доменні події)
                                               │
                                  EventSourcedEarningLineRepository
-                         ┌────────────────────┴───────────────────┐  (one DB transaction)
+                         ┌────────────────────┴───────────────────┐  (одна транзакція БД)
                          ▼                                        ▼
             earning_line_events (append-only)          Laravel event dispatcher
-             source of truth, versioned                           │
+            джерело правди, з версіями                            │
                                                        EarningLineProjector
                                                                   ▼
                                             earning_lines / earning_line_adjustments
-                                                    (read models, rebuildable)
+                                                (read models, можна перебудувати)
 ```
 
-* **Write side** — the `EarningLine` aggregate (plain PHP, no framework dependencies) is rebuilt from its
-  events, executes a command, and records new events. The repository appends them to the event store
-  with **optimistic concurrency** (`UNIQUE(aggregate_id, version)`): if two specialists edit the same line
-  simultaneously, the second save fails with `ConcurrencyException` (HTTP 409) instead of silently
-  overwriting.
-* **Read side** — `EarningLineProjector` is a Laravel event subscriber that keeps the read models in sync.
-  It runs synchronously inside the same transaction, so the read models are always consistent with the
-  event store. They can be thrown away and rebuilt at any time:
-  `php artisan earning-lines:rebuild-projections`.
-* **Source data changes** arrive as the `EmployeeBaseSalaryChanged` integration event. Its listener simply
-  asks every line of that employee to recalculate — whether that is applied or ignored is decided by the
-  aggregate, not by the caller.
+* **Write side** — агрегат `EarningLine` (чистий PHP, без залежностей від фреймворку) відновлюється зі своїх
+  подій, виконує команду і записує нові події. Репозиторій дописує їх в event store з **optimistic
+  concurrency** (`UNIQUE(aggregate_id, version)`): якщо два спеціалісти одночасно змінюють один рядок, друге
+  збереження завершиться `ConcurrencyException` (HTTP 409), а не непомітно перезапише перше.
+* **Read side** — `EarningLineProjector` — це Laravel event subscriber, який синхронізує read models.
+  Він працює синхронно в тій самій транзакції, тому read models завжди узгоджені з event store. Їх можна
+  будь-коли видалити й перебудувати: `php artisan earning-lines:rebuild-projections`.
+* **Зміни вихідних даних** надходять як інтеграційна подія `EmployeeBaseSalaryChanged`. Її listener просто
+  просить кожен рядок цього працівника перерахуватися — чи буде перерахунок застосовано, чи проігноровано,
+  вирішує агрегат, а не той, хто викликає.
 
-### Project structure
+### Структура проєкту
 
 ```
 app/Domain/Shared/             AggregateRoot, DomainEvent
-app/Domain/EarningLine/        EarningLine aggregate, Money, ManualAdjustment, events, exceptions
-app/Application/EarningLine/   Commands, command handlers, GetEarningLineHistory query + DTO
-app/Infrastructure/            PostgresEventStore, EventSerializer, repository, projector
-app/Events, app/Listeners      EmployeeBaseSalaryChanged integration event + listener
-app/Http/                      EarningLineController, form requests
+app/Domain/EarningLine/        агрегат EarningLine, Money, ManualAdjustment, події, винятки
+app/Application/EarningLine/   команди, обробники команд, запит GetEarningLineHistory
+app/Infrastructure/            PostgresEventStore, EventSerializer, репозиторій, проєктор
+app/Events, app/Listeners      інтеграційна подія EmployeeBaseSalaryChanged + listener
+app/Http/                      EarningLineController, form requests, EarningLineResource
 app/Console/Commands/          earning-lines:rebuild-projections
-database/migrations/           event store (with immutability trigger) and read models
-tests/Unit/                    domain + serializer tests (no DB)
-tests/Feature/                 end-to-end tests against PostgreSQL
+database/migrations/           event store (з тригером незмінності) і read models
+tests/Unit/                    тести домену та серіалізатора (без БД)
+tests/Feature/                 end-to-end тести на PostgreSQL
 ```
 
 ---
 
 ## API
 
-| Method | Path | Body | Description |
+| Метод | Шлях | Тіло запиту | Опис |
 |---|---|---|---|
-| `POST` | `/api/earning-lines` | `employee_id`, `amount` | System calculates a new line |
-| `POST` | `/api/earning-lines/{id}/recalculations` | `amount` | System recalculation (ignored once the line has adjustments) |
-| `POST` | `/api/earning-lines/{id}/adjustments` | `amount`, `comment`, `author_id` | Specialist adds a manual correction |
-| `GET` | `/api/earning-lines/{id}` | — | Current value + audit history |
-| `GET` | `/api/earning-lines/{id}/events` | — | Raw immutable event stream |
+| `POST` | `/api/earning-lines` | `employee_id`, `amount` | Система розраховує новий рядок |
+| `POST` | `/api/earning-lines/{id}/recalculations` | `amount` | Системний перерахунок (ігнорується, щойно рядок має корекції) |
+| `POST` | `/api/earning-lines/{id}/adjustments` | `amount`, `comment`, `author_id` | Спеціаліст додає ручну корекцію |
+| `GET` | `/api/earning-lines/{id}` | — | Поточне значення + audit-історія |
+| `GET` | `/api/earning-lines/{id}/events` | — | Сирий незмінний потік подій |
 
-Amounts are decimal strings with at most two decimals and an optional sign: `"1050.00"`, `"-45.55"`, `"+0.20"`.
+Суми передаються як десяткові рядки з не більш ніж двома знаками після крапки та необов'язковим знаком:
+`"1050.00"`, `"-45.55"`, `"+0.20"`.
 
-Example response of `GET /api/earning-lines/{id}` after the reference scenario:
+Приклад відповіді `GET /api/earning-lines/{id}` після еталонного сценарію:
 
 ```json
 {
@@ -137,49 +136,49 @@ Example response of `GET /api/earning-lines/{id}` after the reference scenario:
 
 ---
 
-## Tests
+## Тести
 
-The data tables from the brief are encoded verbatim in
-`tests/Feature/EarningLine/BusinessCaseIntegrationTest.php` (steps 1–8 and the expected final audit history)
-and drive full-stack integration tests: HTTP API → aggregate → PostgreSQL event store → projections, with
-source data changes delivered as the `EmployeeBaseSalaryChanged` event. It checks the current value after
-**each** step (one data-provider case per step), the final audit history row by row, comments/authors of
-every correction, the ignored recalculation at step 4, the compensating correction, immutability and
-rebuilding the history from the event store.
+Таблиці даних із завдання перенесені дослівно в
+`tests/Feature/EarningLine/BusinessCaseIntegrationTest.php` (кроки 1–8 та очікувана фінальна audit-історія)
+і керують інтеграційними тестами всього стеку: HTTP API → агрегат → event store у PostgreSQL → проєкції,
+а зміни вихідних даних надходять як подія `EmployeeBaseSalaryChanged`. Тест перевіряє поточне значення після
+**кожного** кроку (окремий кейс data provider на кожен крок), фінальну audit-історію рядок за рядком,
+коментарі та авторів кожної корекції, проігнорований перерахунок на кроці 4, компенсуючу корекцію,
+незмінність і перебудову історії з event store.
 
-The scenario is also checked without a database in `tests/Unit/Domain/EarningLineTest.php` (pure domain).
-Every other test covers one concern only: DB-level immutability of events and concurrent modification
-detection (`EventStoreTest`), fan-out of source data changes to unlocked lines (`SourceDataChangeTest`),
-HTTP validation and error responses (`EarningLineApiTest`), serialization round-trips and `Money`
-arithmetic/formatting (unit tests).
+Сценарій також перевіряється без бази даних у `tests/Unit/Domain/EarningLineTest.php` (чистий домен).
+Кожен інший тест покриває лише одну тему: незмінність подій на рівні БД і виявлення одночасних змін
+(`EventStoreTest`), поширення змін вихідних даних на незаблоковані рядки (`SourceDataChangeTest`),
+HTTP-валідацію та відповіді з помилками (`EarningLineApiTest`), серіалізацію подій туди й назад та арифметику
+й форматування `Money` (unit-тести).
 
 ---
 
-## Assumptions
+## Припущення
 
-* **Money** is stored as integer cents (no floats anywhere) in a single currency (USD).
-* **Comment** is mandatory and must not be blank (it is trimmed); max 1000 characters.
-* **Zero-amount adjustments** are rejected — they would add noise without changing anything.
-* **Lock trigger** — the first manual adjustment locks the line, even if a later compensating adjustment
-  brings the net adjustment total back to zero. The rule in the brief is "at least one manual correction",
-  not "non-zero net correction".
-* **Ignored recalculations** are not silently dropped: they are recorded as `SystemRecalculationIgnored`
-  events for auditability (the value does not change). A recalculation to the same value on an unlocked
-  line is a no-op and records nothing.
-* **Compensating corrections** are regular adjustments; the link to the corrected adjustment is expressed
-  in the comment (as in the brief: "Correcting mistake in adjustment #4"). A formal `corrects_adjustment`
-  reference would be a natural next step.
-* **Authentication / authorization** is out of scope; `author_id` is passed explicitly in the request.
-* **What the system calculates** — the PoC treats the line's system value as being equal to the source data
-  value (the base salary). The real calculation logic would live in the source system / calculator that
-  emits `EmployeeBaseSalaryChanged`. All lines of the employee receive the recalculation; in a real payroll
-  only lines of open pay periods would.
-* **Projections are synchronous** for simplicity and strong consistency. In production they could be moved
-  to queued listeners (with the event store `id` as a checkpoint) without touching the domain.
-* **No event-sourcing package** (e.g. `spatie/laravel-event-sourcing`) is used on purpose: the hand-rolled
-  event store is ~100 lines, has no "magic", and keeps the model easy to read and review.
+* **Гроші** зберігаються як цілі центи (жодних float) в одній валюті (USD).
+* **Коментар** обов'язковий і не може бути порожнім (пробіли на краях обрізаються); максимум 1000 символів.
+* **Корекції з нульовою сумою** відхиляються — вони лише додавали б шум, нічого не змінюючи.
+* **Блокування рядка** — перша ручна корекція блокує рядок, навіть якщо пізніша компенсуюча корекція повертає
+  сумарну корекцію до нуля. Правило в завданні звучить як «хоча б одна ручна корекція», а не «ненульова
+  сумарна корекція».
+* **Проігноровані перерахунки** не відкидаються мовчки: вони записуються як події `SystemRecalculationIgnored`
+  для аудиту (значення не змінюється). Перерахунок до того самого значення на незаблокованому рядку нічого
+  не робить і нічого не записує.
+* **Компенсуючі корекції** — це звичайні корекції; зв'язок із виправленою корекцією вказується в коментарі
+  (як у завданні: "Correcting mistake in adjustment #4"). Природним наступним кроком було б формальне
+  посилання `corrects_adjustment`.
+* **Автентифікація / авторизація** поза межами завдання; `author_id` явно передається в запиті.
+* **Що розраховує система** — у PoC системне значення рядка дорівнює значенню вихідних даних (базовій
+  зарплаті). Справжня логіка розрахунку жила б у системі-джерелі / калькуляторі, який генерує
+  `EmployeeBaseSalaryChanged`. Перерахунок отримують усі рядки працівника; у реальному payroll — лише рядки
+  відкритих розрахункових періодів.
+* **Проєкції синхронні** — заради простоти та строгої узгодженості. У продакшені їх можна перенести в
+  listeners через черги (з `id` з event store як checkpoint), не чіпаючи домен.
+* **Пакет для event sourcing** (наприклад, `spatie/laravel-event-sourcing`) свідомо не використовується:
+  власний event store займає ~100 рядків, не має «магії» і робить модель простою для читання та рев'ю.
 
-## Use of AI
+## Використання AI
 
-This solution was developed with the help of Claude Code (planning, implementation and tests),
-reviewed and verified by running the full test suite against PostgreSQL.
+Рішення розроблено за допомогою Claude Code (планування, реалізація і тести), переглянуто й перевірено
+запуском повного набору тестів на PostgreSQL.
