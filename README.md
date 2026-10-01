@@ -139,7 +139,15 @@ Example response of `GET /api/earning-lines/{id}` after the reference scenario:
 
 ## Tests
 
-The reference scenario from the brief is verified at three levels:
+The data tables from the brief are encoded verbatim in
+`tests/Feature/EarningLine/BusinessCaseIntegrationTest.php` (steps 1–8 and the expected final audit history)
+and drive full-stack integration tests: HTTP API → aggregate → PostgreSQL event store → projections, with
+source data changes delivered as the `EmployeeBaseSalaryChanged` event. It checks the current value after
+**each** step (one data-provider case per step), the final audit history row by row, comments/authors of
+every correction, the ignored recalculation at step 4, the compensating correction, immutability and
+rebuilding the history from the event store.
+
+The same scenario is additionally verified at other levels:
 
 * `tests/Unit/Domain/EarningLineTest.php` — pure domain, value checked after **every** step of the scenario.
 * `tests/Feature/EarningLine/ReferenceScenarioTest.php` — through command handlers, the event store and
